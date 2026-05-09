@@ -5,12 +5,12 @@
  * deployments live in `./FHECounter.local.ts` (gitignored) and are merged in
  * at module load. Import by name: `import { FHECounter } from "~~/contracts/FHECounter";`
  */
-import { FHECounter as FHECounter_LOCAL } from "./FHECounter.local";
 import type { ContractDeployment } from "~~/utils/contract";
+import { FHECounter as FHECounter_LOCAL } from "./FHECounter.local";
 
 const REMOTE = {
   11155111: {
-    address: "0xB9AA7F7E25c91D7004CcEb71c712Cd58a5fDFb03",
+    address: "0x34A46895C4F94ce6ba331ed3A05b2D81AAf8eE2C",
     abi: [
       {
         type: "function",
@@ -96,7 +96,7 @@ const REMOTE = {
         inputs: [],
       },
     ],
-    deployedOnBlock: 10723515,
+    deployedOnBlock: 10819335,
   },
 } as const;
 

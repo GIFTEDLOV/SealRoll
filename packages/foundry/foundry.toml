@@ -34,4 +34,4 @@ forge-fhevm = { version = "eba2324", git = "https://github.com/zama-ai/forge-fhe
 
 [soldeer]
 remappings_version = false
-recursive_deps = true
+recursive_deps = false

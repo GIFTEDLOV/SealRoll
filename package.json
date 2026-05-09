@@ -13,9 +13,9 @@
     ]
   },
   "scripts": {
-    "chain": "./scripts/chain.sh",
-    "deploy:localhost": "./scripts/deploy-localhost.sh",
-    "deploy:sepolia": "./scripts/deploy-sepolia.sh",
+    "chain": "bash ./scripts/chain.sh",
+    "deploy:localhost": "bash ./scripts/deploy-localhost.sh",
+    "deploy:sepolia": "bash ./scripts/deploy-sepolia.sh",
     "generate": "ts-node ./scripts/generateTsAbis.ts",
     "postinstall": "ts-node ./scripts/generateTsAbis.ts || true",
     "contracts:install": "cd packages/foundry && forge soldeer install",
