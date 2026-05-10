@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatEther, parseEther } from "viem";
 import { useConfidentialPayroll } from "~~/hooks/payroll/useConfidentialPayroll";
+import { withTxToast } from "~~/utils/txToast";
 
 const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const MAX_EUINT64_WEI = 18_446_744_073_709_551_615n;
@@ -53,7 +54,7 @@ export function EmployerPanel() {
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleFund = async () => {
     try {
-      await fundTreasury(fundAmount);
+      await withTxToast("Funding treasury", `Sending ${fundAmount} ETH to the contract`, "Treasury funded", () => fundTreasury(fundAmount));
       setFundAmount("");
       setFundOpen(false);
     } catch {
@@ -63,7 +64,7 @@ export function EmployerPanel() {
 
   const handleWithdraw = async () => {
     try {
-      await withdrawTreasury(withdrawAmount);
+      await withTxToast("Withdrawing", `Withdrawing ${withdrawAmount} ETH from treasury`, "Withdrawal complete", () => withdrawTreasury(withdrawAmount));
       setWithdrawAmount("");
       setWithdrawOpen(false);
     } catch {
@@ -97,7 +98,7 @@ export function EmployerPanel() {
     }
 
     try {
-      await setSalary(empAddress, empSalary);
+      await withTxToast("Setting salary", "Encrypting salary and submitting on-chain", "Salary set", () => setSalary(empAddress, empSalary));
       setSalarySuccess(`Salary set for ${empAddress}`);
       setEmpAddress("");
       setEmpSalary("");
@@ -109,7 +110,7 @@ export function EmployerPanel() {
   const handleRemove = async (addr: string) => {
     setRemovingRow(addr);
     try {
-      await removeEmployee(addr);
+      await withTxToast("Removing employee", "Submitting removal on-chain", "Employee removed", () => removeEmployee(addr));
     } finally {
       setRemovingRow(null);
     }
@@ -117,17 +118,25 @@ export function EmployerPanel() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-5">
       {/* ── Treasury card ──────────────────────────────────────────────── */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body gap-3">
-          <h2 className="card-title">Treasury</h2>
+      <div className="card bg-base-200 border border-base-300 hover:border-primary/40 transition-colors duration-200">
+        <div className="card-body gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="card-title text-base font-medium uppercase tracking-wider text-base-content/60 m-0">
+              Treasury balance
+            </h2>
+            <span className="text-xs text-base-content/40">Sepolia ETH</span>
+          </div>
 
-          <p className="text-4xl font-bold font-mono tabular-nums">
+          <p className="text-5xl md:text-6xl font-bold font-mono tabular-nums tracking-tight">
             {isLoadingReads ? (
               <span className="loading loading-dots loading-sm" />
             ) : (
-              `${parseFloat(formatEther(treasuryBalance)).toFixed(4)} ETH`
+              <>
+                <span>{parseFloat(formatEther(treasuryBalance)).toFixed(4)}</span>
+                <span className="text-2xl ml-2 text-base-content/50 font-normal">ETH</span>
+              </>
             )}
           </p>
 
@@ -148,7 +157,7 @@ export function EmployerPanel() {
               Fund treasury
             </button>
             <button
-              className="btn btn-sm btn-outline"
+              className="btn btn-sm btn-ghost border border-base-300"
               onClick={() => {
                 setWithdrawOpen(o => !o);
                 setFundOpen(false);
@@ -159,7 +168,7 @@ export function EmployerPanel() {
           </div>
 
           {fundOpen && (
-            <div className="flex gap-2 items-center flex-wrap">
+            <div className="bg-base-300/50 rounded-lg p-3 flex gap-2 items-center flex-wrap">
               <input
                 className="input input-bordered input-sm w-36"
                 placeholder="0.1 ETH"
@@ -186,7 +195,7 @@ export function EmployerPanel() {
           )}
 
           {withdrawOpen && (
-            <div className="flex gap-2 items-center flex-wrap">
+            <div className="bg-base-300/50 rounded-lg p-3 flex gap-2 items-center flex-wrap">
               <input
                 className="input input-bordered input-sm w-36"
                 placeholder="0.1 ETH"
@@ -215,9 +224,14 @@ export function EmployerPanel() {
       </div>
 
       {/* ── Add / update employee card ─────────────────────────────────── */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body gap-3">
-          <h2 className="card-title">Add or update employee</h2>
+      <div className="card bg-base-200 border border-base-300 hover:border-primary/40 transition-colors duration-200">
+        <div className="card-body gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="card-title text-base font-medium uppercase tracking-wider text-base-content/60 m-0">
+              Add or update employee
+            </h2>
+            <span className="text-xs text-base-content/40">Salary is encrypted in your browser</span>
+          </div>
 
           {salaryError && (
             <div role="alert" className="alert alert-error text-sm">
@@ -230,29 +244,35 @@ export function EmployerPanel() {
             </div>
           )}
 
-          <input
-            className="input input-bordered font-mono w-full"
-            placeholder="0x… employee address"
-            value={empAddress}
-            onChange={e => {
-              setEmpAddress(e.target.value);
-              setSalaryError(null);
-              setSalarySuccess(null);
-            }}
-          />
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            placeholder="Salary in ETH (e.g. 0.05)"
-            value={empSalary}
-            onChange={e => {
-              setEmpSalary(e.target.value);
-              setSalaryError(null);
-              setSalarySuccess(null);
-            }}
-          />
+          <div className="form-control gap-1">
+            <label className="text-xs uppercase tracking-wider text-base-content/50">Employee address</label>
+            <input
+              className="input input-bordered input-md font-mono w-full"
+              placeholder="0x… employee address"
+              value={empAddress}
+              onChange={e => {
+                setEmpAddress(e.target.value);
+                setSalaryError(null);
+                setSalarySuccess(null);
+              }}
+            />
+          </div>
+          <div className="form-control gap-1">
+            <label className="text-xs uppercase tracking-wider text-base-content/50">Salary (ETH)</label>
+            <input
+              type="text"
+              className="input input-bordered input-md w-full"
+              placeholder="Salary in ETH (e.g. 0.05)"
+              value={empSalary}
+              onChange={e => {
+                setEmpSalary(e.target.value);
+                setSalaryError(null);
+                setSalarySuccess(null);
+              }}
+            />
+          </div>
           <button
-            className="btn btn-primary w-full"
+            className="btn btn-primary w-full mt-2"
             onClick={handleSetSalary}
             disabled={isSettingSalary || !empAddress.trim() || !empSalary.trim()}
           >
@@ -269,20 +289,28 @@ export function EmployerPanel() {
       </div>
 
       {/* ── Employees table card ───────────────────────────────────────── */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body gap-3">
-          <h2 className="card-title">Employees ({employeeCount})</h2>
+      <div className="card bg-base-200 border border-base-300 hover:border-primary/40 transition-colors duration-200">
+        <div className="card-body gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="card-title text-base font-medium uppercase tracking-wider text-base-content/60 m-0">
+              Employees
+            </h2>
+            <span className="badge badge-primary badge-sm">{employeeCount} active</span>
+          </div>
 
           {employees.length === 0 ? (
-            <p className="text-base-content/60">No employees yet. Add one above.</p>
+            <div className="text-center py-8 text-base-content/50">
+              <h3 className="text-base">No employees yet</h3>
+              <p className="text-sm mt-1">Add one above to start paying</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="table table-zebra">
+              <table className="table table-sm">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Address</th>
-                    <th>Action</th>
+                    <th className="text-xs uppercase tracking-wider text-base-content/60">#</th>
+                    <th className="text-xs uppercase tracking-wider text-base-content/60">Address</th>
+                    <th className="text-xs uppercase tracking-wider text-base-content/60">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,17 +319,18 @@ export function EmployerPanel() {
                       <td className="tabular-nums">{i + 1}</td>
                       <td>
                         <span
-                          className="tooltip cursor-pointer font-mono text-sm"
+                          className="tooltip cursor-pointer"
                           data-tip={addr}
                           onClick={() => navigator.clipboard.writeText(addr)}
                           title="Click to copy"
                         >
-                          {truncate(addr)}
+                          <code className="font-mono text-sm">{truncate(addr)}</code>
+                          <span className="badge badge-ghost badge-xs ml-2">🔒 Encrypted</span>
                         </span>
                       </td>
                       <td>
                         <button
-                          className="btn btn-xs btn-error btn-outline"
+                          className="btn btn-xs btn-ghost text-error hover:bg-error/10"
                           onClick={() => handleRemove(addr)}
                           disabled={isRemoving && removingRow === addr}
                         >

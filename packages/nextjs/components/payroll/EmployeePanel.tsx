@@ -2,6 +2,7 @@
 
 import { formatEther } from "viem";
 import { useEmployeeSalary } from "~~/hooks/payroll/useEmployeeSalary";
+import { withTxToast } from "~~/utils/txToast";
 
 function truncateHandle(handle: string) {
   return `${handle.slice(0, 6)}…${handle.slice(-4)}`;
@@ -27,23 +28,49 @@ export function EmployeePanel() {
     claimStage,
   } = useEmployeeSalary();
 
+  const onRequestClaim = async () => {
+    try {
+      await withTxToast("Requesting claim", "Submitting requestClaim transaction", "Claim requested", () => requestClaim());
+    } catch { /* hook surfaces claimError */ }
+  };
+  const onFinalizeClaim = async () => {
+    try {
+      await withTxToast("Finalizing payment", "Fetching KMS proof and submitting fulfillClaim", "Payment received", () => finalizeClaim());
+    } catch { /* hook surfaces finalizeError */ }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-5">
       {/* ── Your encrypted salary ──────────────────────────────────────── */}
-      <div className="card bg-base-100 shadow-lg">
+      <div className="card bg-base-200 border border-base-300 hover:border-primary/40 transition-colors duration-200">
         <div className="card-body gap-3">
-          <h2 className="card-title">Your encrypted salary</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="card-title text-base font-semibold uppercase tracking-wider text-base-content/60 m-0">
+              Your encrypted salary
+            </h2>
+            {!encryptedHandle ? (
+              <span className="badge badge-ghost badge-sm">Inactive</span>
+            ) : decryptedAmountWei !== undefined ? (
+              <span className="badge badge-success badge-sm">Decrypted</span>
+            ) : (
+              <span className="badge badge-warning badge-sm gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-warning-content animate-pulse" />
+                Encrypted
+              </span>
+            )}
+          </div>
 
           {isLoadingHandle ? (
             <span className="loading loading-dots loading-sm" />
           ) : !encryptedHandle ? (
-            <p className="text-base-content/60">No salary has been set for your address yet.</p>
+            <p className="text-base text-base-content/70">No salary has been set for your address yet.</p>
           ) : (
             <>
-              <div>
-                <span className="badge badge-outline font-mono text-xs">
-                  {truncateHandle(encryptedHandle)}
-                </span>
+              <div className="bg-base-300/50 rounded-lg p-3">
+                <div className="text-xs uppercase tracking-wider text-base-content/50 mb-1">
+                  🔒 Encrypted handle (only you can decrypt)
+                </div>
+                <code className="font-mono text-base font-semibold">{truncateHandle(encryptedHandle)}</code>
               </div>
 
               {!isAllowed ? (
@@ -69,9 +96,11 @@ export function EmployeePanel() {
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-3xl font-bold font-mono tabular-nums">
-                    {parseFloat(formatEther(decryptedAmountWei)).toFixed(4)} ETH
+                  <p className="text-5xl md:text-6xl font-bold font-mono tabular-nums text-primary tracking-tight">
+                    {parseFloat(formatEther(decryptedAmountWei)).toFixed(4)}
+                    <span className="text-xl ml-2 text-base-content/50 font-normal">ETH</span>
                   </p>
+                  <p className="text-xs text-base-content/50 mt-1">✓ Decrypted in your browser</p>
                   <button className="btn btn-sm btn-outline" onClick={decrypt} disabled={isDecrypting}>
                     {isDecrypting ? (
                       <>
@@ -95,22 +124,27 @@ export function EmployeePanel() {
         </div>
       </div>
 
-      {/* ── Claim your salary ──────────────────────────────────────────── */}
-      <div className="card bg-base-100 shadow-lg">
+      {/* ── Claim your payment ─────────────────────────────────────────── */}
+      <div className="card bg-base-200 border border-base-300 hover:border-primary/40 transition-colors duration-200">
         <div className="card-body gap-3">
-          <h2 className="card-title">Claim your salary</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="card-title text-base font-semibold uppercase tracking-wider text-base-content/60 m-0">
+              Claim your payment
+            </h2>
+            {claimStage === "idle" && <span className="badge badge-ghost badge-sm">Ready</span>}
+            {claimStage === "requesting" && <span className="badge badge-info badge-sm">Step 1/2</span>}
+            {claimStage === "pending" && <span className="badge badge-warning badge-sm">Awaiting finalize</span>}
+            {claimStage === "finalizing" && <span className="badge badge-info badge-sm">Step 2/2</span>}
+            {claimStage === "done" && <span className="badge badge-success badge-sm">Paid</span>}
+          </div>
 
           <p className="text-sm text-base-content/70">
-            Initiate a claim. Anyone holding the relayer&apos;s decryption proof can finalize the payment in the next
-            step.
+            Start a claim to begin the payment. The decryption proof is fetched in the next step, and your ETH
+            transfers automatically once the contract verifies it.
           </p>
 
           {claimStage === "idle" && (
-            <button
-              className="btn btn-primary w-full"
-              onClick={requestClaim}
-              disabled={!encryptedHandle}
-            >
+            <button className="btn btn-primary w-full" onClick={onRequestClaim} disabled={!encryptedHandle}>
               Request claim
             </button>
           )}
@@ -130,11 +164,7 @@ export function EmployeePanel() {
                   finalize payment. This contacts Zama&apos;s KMS relayer and may take 30–60 seconds.
                 </span>
               </div>
-              <button
-                className="btn btn-success w-full"
-                onClick={finalizeClaim}
-                disabled={isFinalizing}
-              >
+              <button className="btn btn-success w-full" onClick={onFinalizeClaim} disabled={isFinalizing}>
                 Finalize claim &amp; receive payment
               </button>
             </div>
@@ -148,13 +178,23 @@ export function EmployeePanel() {
           )}
 
           {claimStage === "done" && lastPaidAmountWei !== undefined && (
-            <div role="alert" className="alert alert-success">
-              <div>
-                <p className="font-bold text-lg">
-                  Paid! You received {parseFloat(formatEther(lastPaidAmountWei)).toFixed(4)} ETH.
-                </p>
-                <p>Your salary has been reset to zero.</p>
-                <p className="text-sm opacity-70 mt-1">Your employer can set a new salary at any time.</p>
+            <div className="rounded-lg bg-success/10 border border-success/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success text-2xl shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <p className="font-bold text-xl m-0">Payment received</p>
+                  <p className="m-0 mt-1">
+                    <span className="text-3xl font-bold font-mono tabular-nums text-success">
+                      {parseFloat(formatEther(lastPaidAmountWei)).toFixed(4)}
+                    </span>{" "}
+                    <span className="text-base text-base-content/50">ETH</span>
+                  </p>
+                  <p className="text-sm text-base-content/60 mt-2 m-0">
+                    Your salary handle has been reset. Your employer can set a new amount any time.
+                  </p>
+                </div>
               </div>
             </div>
           )}

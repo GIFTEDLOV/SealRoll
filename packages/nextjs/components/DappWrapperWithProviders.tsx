@@ -9,7 +9,9 @@ import { RelayerCleartext, hardhatCleartextConfig } from "@zama-fhe/sdk/cleartex
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 import { useTheme } from "next-themes";
 import { Toaster } from "react-hot-toast";
+import { Toaster as SonnerToaster } from "sonner";
 import { WagmiProvider, useChainId } from "wagmi";
+import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
 import { BlockieAvatar } from "~~/components/helper";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
@@ -75,7 +77,7 @@ const ZamaRuntimeProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const DappWrapperWithProviders = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme } = useTheme();
-  const isDarkMode = resolvedTheme === "dark";
+  const isDarkMode = resolvedTheme === "sealroll-dark";
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -94,8 +96,10 @@ export const DappWrapperWithProviders = ({ children }: { children: React.ReactNo
             <div className={`flex flex-col min-h-screen`}>
               <Header />
               <main className="relative flex flex-col flex-1">{children}</main>
+              <Footer />
             </div>
             <Toaster />
+            <SonnerToaster position="bottom-right" theme="dark" richColors closeButton expand={false} duration={8000} />
           </ZamaRuntimeProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

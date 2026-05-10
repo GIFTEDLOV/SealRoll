@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
-
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant dark (&:where([data-theme=sealroll-dark], [data-theme=sealroll-dark] *));
 
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
@@ -10,61 +8,53 @@
 }
 
 @plugin "daisyui" {
-  themes:
-    light,
-    dark --prefersdark;
+  themes: sealroll-dark --default;
 }
 
 @plugin "daisyui/theme" {
-  name: "light";
-
-  --color-primary: #93bbfb;
-  --color-primary-content: #212638;
-  --color-secondary: #dae8ff;
-  --color-secondary-content: #212638;
-  --color-accent: #93bbfb;
-  --color-accent-content: #212638;
-  --color-neutral: #212638;
-  --color-neutral-content: #ffffff;
-  --color-base-100: #e8e8e8;
-  --color-base-200: #e8e8e8;
-  --color-base-300: #e8e8e8;
-  --color-base-content: #212638;
-  --color-info: #93bbfb;
-  --color-success: #34eeb6;
-  --color-warning: #ffcf72;
-  --color-error: #ff8863;
-
-  --radius-field: 9999rem;
-  --radius-box: 1rem;
-  --tt-tailw: 6px;
+  name: "sealroll-dark";
+  color-scheme: dark;
+  --color-base-100: #0A0A0B;
+  --color-base-200: #16161A;
+  --color-base-300: #27272A;
+  --color-base-content: #FAFAF7;
+  --color-primary: #F5C518;
+  --color-primary-content: #0A0A0B;
+  --color-secondary: #06B6D4;
+  --color-secondary-content: #0A0A0B;
+  --color-accent: #F5C518;
+  --color-accent-content: #0A0A0B;
+  --color-neutral: #FAFAF7;
+  --color-neutral-content: #0A0A0B;
+  --color-info: #06B6D4;
+  --color-info-content: #0A0A0B;
+  --color-success: #22C55E;
+  --color-success-content: #0A0A0B;
+  --color-warning: #F59E0B;
+  --color-warning-content: #0A0A0B;
+  --color-error: #EF4444;
+  --color-error-content: #FAFAF7;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --border: 1px;
 }
 
-@plugin "daisyui/theme" {
-  name: "dark";
-
-  --color-primary: #212638;
-  --color-primary-content: #f9fbff;
-  --color-secondary: #323f61;
-  --color-secondary-content: #f9fbff;
-  --color-accent: #4969a6;
-  --color-accent-content: #f9fbff;
-  --color-neutral: #f9fbff;
-  --color-neutral-content: #385183;
-  --color-base-100: #b7791f;
-  --color-base-200: #975a16;
-  --color-base-300: #744210;
-  --color-base-content: #f9fbff;
-  --color-info: #385183;
-  --color-success: #34eeb6;
-  --color-warning: #ffcf72;
-  --color-error: #ff8863;
-
-  --radius-field: 9999rem;
-  --radius-box: 1rem;
-
-  --tt-tailw: 6px;
-  --tt-bg: var(--color-primary);
+@layer base {
+  body {
+    background-image: radial-gradient(color-mix(in oklab, currentColor 12%, transparent) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: fixed;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: var(--color-base-100);
+    opacity: 0.97;
+    z-index: -1;
+    pointer-events: none;
+  }
 }
 
 /*
@@ -81,7 +71,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--color-base-300, currentColor);
   }
 
   p {
@@ -118,7 +108,7 @@
 
 :root,
 [data-theme] {
-  background: var(--color-base-200);
+  background: var(--color-base-100);
 }
 
 .btn {
@@ -135,4 +125,27 @@
 
 .link:hover {
   opacity: 80%;
+}
+
+@layer components {
+  .btn {
+    transition-property: transform, box-shadow, background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+  .card {
+    transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms;
+  }
+  .badge {
+    transition: background-color 150ms, border-color 150ms, transform 150ms;
+  }
+  a {
+    transition: color 150ms;
+  }
 }

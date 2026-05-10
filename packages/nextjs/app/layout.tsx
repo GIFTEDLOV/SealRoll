@@ -5,8 +5,8 @@ import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/helper/getMetadata";
 
 export const metadata = getMetadata({
-  title: "Zama Template",
-  description: "Built with FHEVM",
+  title: "Sealroll — Confidential Payroll",
+  description: "Encrypted salaries on Ethereum. Powered by Zama fhEVM.",
 });
 
 const DappWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -16,7 +16,7 @@ const DappWrapper = ({ children }: { children: React.ReactNode }) => {
         <link href="https://api.fontshare.com/v2/css?f[]=telegraf@400,500,700&display=swap" rel="stylesheet" />
       </head>
       <body suppressHydrationWarning>
-        <ThemeProvider enableSystem>
+        <ThemeProvider attribute="data-theme" forcedTheme="sealroll-dark">
           <DappWrapperWithProviders>{children}</DappWrapperWithProviders>
         </ThemeProvider>
       </body>
